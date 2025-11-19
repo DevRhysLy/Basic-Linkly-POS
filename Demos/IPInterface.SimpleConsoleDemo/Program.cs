@@ -71,19 +71,29 @@ namespace POS_GUI_Demo
                 DropDownStyle = ComboBoxStyle.DropDownList,
             };
 
+            submitButton2 = new Button()
+            {
+                Text = "Open Control Panel",
+                Top = 120,
+                Left = 20,
+                Width = 200,
+            };
+
             txnTypeBox.Items.Add("Purchase");
             txnTypeBox.Items.Add("Refund");
             txnTypeBox.SelectedIndex = 0; // default is purchase
 
             statusList = new ListBox()
             {
-                Top = 130,
+                Top = 140,
                 Left = 20,
                 Width = 400,
                 Height = 230,
             };
 
             submitButton.Click += SubmitButton_Click;
+            submitButton2.Click += SubmitButton2_Click;
+            Controls.Add(submitButton2);
 
             Controls.Add(label);
             Controls.Add(amountTextBox);
@@ -120,7 +130,7 @@ namespace POS_GUI_Demo
 
                 UpdateStatus("Connected for logon...");
 
-                // var req = new EFTLogonRequest();
+                var req = new EFTLogonRequest();
 
                 if (!eft.DoLogon())
                 {
@@ -153,6 +163,58 @@ namespace POS_GUI_Demo
             // Create demo object & run in background
             var demo = new EFTClientIPDemo(amount, txnType, UpdateStatus);
             Task.Run(() => demo.Run());
+        }
+
+        private void SubmitButton2_Click(object sender, EventArgs e)
+        {
+            statusList.Items.Clear();
+            statusList.Items.Add("Opening EFT Control Panel...");
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    var eft = new EFTClientIP()
+                    {
+                        HostName = "127.0.0.1",
+                        HostPort = 2011,
+                        UseSSL = false,
+                    };
+
+                    eft.OnTerminated += (s, ev) =>
+                    {
+                        UpdateStatus("Connection terminated.");
+                    };
+
+                    if (!eft.Connect())
+                    {
+                        UpdateStatus("Connection failed.");
+                        return;
+                    }
+
+                    // Create Control Panel request
+                    var cpReq = new EFTControlPanelRequest()
+                    {
+                        ControlPanelType = ControlPanelType.Full,
+                    };
+
+                    if (!eft.DoDisplayControlPanel(cpReq))
+                    {
+                        UpdateStatus("Failed to open control panel.");
+                    }
+                    else
+                    {
+                        UpdateStatus("Control panel opened successfully.");
+                    }
+
+                    eft.Disconnect();
+                    eft.Dispose();
+                }
+                catch (Exception ex)
+                {
+                    UpdateStatus("ERROR: " + ex.Message);
+                }
+            });
         }
 
         // Thread-safe update from EFTClientIPDemo
@@ -263,3 +325,8 @@ namespace POS_GUI_Demo
         }
     }
 }
+
+//var cpReq = new EFTControlPanelRequest()
+// {
+//     ControlPanelType = Full,
+// };
