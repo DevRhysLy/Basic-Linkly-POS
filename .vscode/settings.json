@@ -1,3 +1,6 @@
 {
-    "dotnet.preferCSharpExtension": true
+    "dotnet.preferCSharpExtension": true,
+            "editor.defaultFormatter": "csharpier.csharpier-vscode"
+        ,
+        "editor.formatOnSave": true // Optional: Enable format on save
 }

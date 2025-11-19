@@ -1,8 +1,8 @@
-﻿using PCEFTPOS.EFTClient.IPInterface;
-using System;
+﻿using System;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
+using PCEFTPOS.EFTClient.IPInterface;
 
 namespace POS_GUI_Demo
 {
@@ -30,7 +30,7 @@ namespace POS_GUI_Demo
 
         public AmountForm()
         {
-            this.Text = "EFTPOS Payment Demo";
+            this.Text = "bestPOS";
             this.Width = 460;
             this.Height = 420;
 
@@ -38,21 +38,21 @@ namespace POS_GUI_Demo
             {
                 Text = "Enter Amount:",
                 Top = 20,
-                Left = 20
+                Left = 20,
             };
 
-             Label typeLabel = new Label()
+            Label typeLabel = new Label()
             {
                 Text = "Transaction Type:",
                 Top = 80,
-                Left = 20
+                Left = 20,
             };
 
             amountTextBox = new TextBox()
             {
                 Top = 45,
                 Left = 20,
-                Width = 200
+                Width = 200,
             };
 
             submitButton = new Button()
@@ -60,7 +60,7 @@ namespace POS_GUI_Demo
                 Text = "Submit Transaction",
                 Top = 80,
                 Left = 20,
-                Width = 200
+                Width = 200,
             };
 
             txnTypeBox = new ComboBox()
@@ -68,7 +68,7 @@ namespace POS_GUI_Demo
                 Top = 105,
                 Left = 20,
                 Width = 200,
-                DropDownStyle = ComboBoxStyle.DropDownList
+                DropDownStyle = ComboBoxStyle.DropDownList,
             };
 
             txnTypeBox.Items.Add("Purchase");
@@ -80,7 +80,7 @@ namespace POS_GUI_Demo
                 Top = 130,
                 Left = 20,
                 Width = 400,
-                Height = 230
+                Height = 230,
             };
 
             submitButton.Click += SubmitButton_Click;
@@ -91,6 +91,51 @@ namespace POS_GUI_Demo
             Controls.Add(typeLabel);
             Controls.Add(txnTypeBox);
             Controls.Add(statusList);
+        }
+
+        protected override void OnLoad(EventArgs e)
+        {
+            base.OnLoad(e);
+            Task.Run(() => RunStartupLogon());
+        }
+
+        private void RunStartupLogon()
+        {
+            UpdateStatus("Running startup logon...");
+
+            try
+            {
+                var eft = new EFTClientIP()
+                {
+                    HostName = "127.0.0.1",
+                    HostPort = 2011,
+                    UseSSL = false,
+                };
+
+                if (!eft.Connect())
+                {
+                    UpdateStatus("Startup logon failed: Cannot connect.");
+                    return;
+                }
+
+                UpdateStatus("Connected for logon...");
+
+                // var req = new EFTLogonRequest();
+
+                if (!eft.DoLogon())
+                {
+                    UpdateStatus("Startup logon failed.");
+                    return;
+                }
+
+                UpdateStatus("Startup Logon Successful.");
+                eft.Disconnect();
+                eft.Dispose();
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus("Startup Logon ERROR: " + ex.Message);
+            }
         }
 
         private void SubmitButton_Click(object sender, EventArgs e)
@@ -122,6 +167,7 @@ namespace POS_GUI_Demo
             statusList.Items.Add(msg);
         }
     }
+
     public class EFTClientIPDemo
     {
         private decimal _amount;
@@ -144,7 +190,7 @@ namespace POS_GUI_Demo
                 {
                     HostName = "127.0.0.1",
                     HostPort = 2011,
-                    UseSSL = false
+                    UseSSL = false,
                 };
 
                 eft.OnTransaction += Eft_OnTransaction;
@@ -161,7 +207,8 @@ namespace POS_GUI_Demo
 
                 _updateUI("Connected.");
 
-                TransactionType type = _txnType == "Refund" ? TransactionType.Refund : TransactionType.PurchaseCash;
+                TransactionType type =
+                    _txnType == "Refund" ? TransactionType.Refund : TransactionType.PurchaseCash;
                 _updateUI($"Sending {_txnType} for: {_amount:C}");
 
                 var req = new EFTTransactionRequest()
@@ -171,7 +218,7 @@ namespace POS_GUI_Demo
                     AmtPurchase = _amount,
                     AmtCash = 0.00M,
                     ReceiptAutoPrint = ReceiptPrintModeType.POSPrinter,
-                    Application = TerminalApplication.EFTPOS
+                    Application = TerminalApplication.EFTPOS,
                 };
 
                 if (!eft.DoTransaction(req))
