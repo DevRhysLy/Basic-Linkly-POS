@@ -30,7 +30,7 @@ namespace POS_GUI_Demo
 
         public AmountForm()
         {
-            this.Text = "bestPOS";
+            this.Text = "perfectPOS";
             this.Width = 460;
             this.Height = 420;
 
