@@ -1,7 +1,7 @@
-﻿using PCEFTPOS.EFTClient.IPInterface.Slave;
-using System;
+﻿using System;
 using System.Runtime.CompilerServices;
 using System.Threading;
+using PCEFTPOS.EFTClient.IPInterface.Slave;
 
 namespace PCEFTPOS.EFTClient.IPInterface
 {
@@ -10,7 +10,8 @@ namespace PCEFTPOS.EFTClient.IPInterface
     /// EFT Event object. Sent when an EFT event occurs
     /// </summary>
     /// <typeparam name="TEFTResponse"></typeparam>
-    public class EFTEventArgs<TEFTResponse> where TEFTResponse : EFTResponse
+    public class EFTEventArgs<TEFTResponse>
+        where TEFTResponse : EFTResponse
     {
         // public event EventHandler<>
         public EFTEventArgs(TEFTResponse response)
@@ -30,14 +31,18 @@ namespace PCEFTPOS.EFTClient.IPInterface
     {
         /// <summary>A socket connect error occurred.</summary>
         Socket_ConnectError,
+
         /// <summary>A socket receive error occurred.</summary>
         Socket_ReceiveError,
+
         /// <summary>A socket send error occurred.</summary>
         Socket_SendError,
+
         /// <summary>A general socket error occurred.</summary>
         Socket_GeneralError,
+
         /// <summary>An error occurred while parsing a received message..</summary>
-        Client_ParseError
+        Client_ParseError,
     }
 
     /// <summary>EFT Client IP event object. Sent when an event occurs.</summary>
@@ -95,7 +100,7 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <summary>
         /// Protected constructor that lets us overwrite how this class obtains an ITcpSocket so
         /// as to use a mock one for unit testing.
-        /// Is protected so testing requires creating a wrapper class but this stops it 
+        /// Is protected so testing requires creating a wrapper class but this stops it
         /// </summary>
         /// <param name="createITcpSocketDelegate"></param>
         protected EFTClientIP(CreateITcpSocketDelegate createITcpSocketDelegate)
@@ -105,8 +110,6 @@ namespace PCEFTPOS.EFTClient.IPInterface
             _createSocketDelegate = createITcpSocketDelegate;
             Initialise();
         }
-
-
 
         public void Dispose()
         {
@@ -123,7 +126,7 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <code>
         ///	eftClientIP.HostName = "127.0.0.1";
         ///	eftClientIP.HostPort = 6001;
-        ///	
+        ///
         ///	if( !eftClientIP.Connect() )
         ///	{
         ///	    MessageBox.Show( "Couldn't connect to the PC-EFTPOS IP Client at " + eftClientIP.HostName + ":" + eftClientIP.HostPort.ToString(),
@@ -156,7 +159,7 @@ namespace PCEFTPOS.EFTClient.IPInterface
             SetCurrentRequest(request);
             Log(LogLevel.Info, tr => tr.Set($"Request via {member}"));
 
-            // Save the current synchronization context so we can use it to send events 
+            // Save the current synchronization context so we can use it to send events
             syncContext = System.Threading.SynchronizationContext.Current;
 
             if (requestInProgess)
@@ -167,7 +170,10 @@ namespace PCEFTPOS.EFTClient.IPInterface
 
             if (!IsConnected)
             {
-                Log(LogLevel.Info, tr => tr.Set($"Not connected in {member} request, trying to connect now..."));
+                Log(
+                    LogLevel.Info,
+                    tr => tr.Set($"Not connected in {member} request, trying to connect now...")
+                );
                 if (!Connect())
                 {
                     Log(LogLevel.Error, tr => tr.Set("Connect failed"));
@@ -193,7 +199,6 @@ namespace PCEFTPOS.EFTClient.IPInterface
             requestInProgess = false;
             return r;
         }
-
 
         /// <summary>Initiate a PC-EFTPOS logon using default values.</summary>
         /// <returns>FALSE if an error occurred.</returns>
@@ -253,7 +258,9 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <summary>Send entry data to PC-EFTPOS.</summary>
         /// <param name="data">Entry data collected by the POS.</param>
         /// <returns>FALSE if an error occurred.</returns>
-        [Obsolete("DoSendEntryData is deprecated, please use DoSendKey(EFTPOSKey.Authorise, data) instead.")]
+        [Obsolete(
+            "DoSendEntryData is deprecated, please use DoSendKey(EFTPOSKey.Authorise, data) instead."
+        )]
         public bool DoSendEntryData(string data)
         {
             return DoRequest(new EFTSendKeyRequest() { Key = EFTPOSKey.Authorise, Data = data });
@@ -372,7 +379,12 @@ namespace PCEFTPOS.EFTClient.IPInterface
 
         #region Methods
 
-        void Log(LogLevel level, Action<TraceRecord> traceAction, [CallerMemberName] string member = "", [CallerLineNumber] int line = 0)
+        void Log(
+            LogLevel level,
+            Action<TraceRecord> traceAction,
+            [CallerMemberName] string member = "",
+            [CallerLineNumber] int line = 0
+        )
         {
             // Check if this log level is enabled and client is subscribed to the OnLog event
             if (OnLog == null || this.LogLevel >= level)
@@ -384,16 +396,39 @@ namespace PCEFTPOS.EFTClient.IPInterface
             traceAction(tr);
             string message = $"{member}() line {line}: {tr.Message}";
 
-            if (UseSynchronizationContextForEvents && syncContext != null && syncContext != SynchronizationContext.Current)
+            if (
+                UseSynchronizationContextForEvents
+                && syncContext != null
+                && syncContext != SynchronizationContext.Current
+            )
             {
-                syncContext?.Post(o => OnLog?.Invoke(this, new LogEventArgs() { LogLevel = level, Message = message, Exception = tr.Exception }), null);
+                syncContext?.Post(
+                    o =>
+                        OnLog?.Invoke(
+                            this,
+                            new LogEventArgs()
+                            {
+                                LogLevel = level,
+                                Message = message,
+                                Exception = tr.Exception,
+                            }
+                        ),
+                    null
+                );
             }
             else
             {
-                OnLog?.Invoke(this, new LogEventArgs() { LogLevel = level, Message = message, Exception = tr.Exception });
+                OnLog?.Invoke(
+                    this,
+                    new LogEventArgs()
+                    {
+                        LogLevel = level,
+                        Message = message,
+                        Exception = tr.Exception,
+                    }
+                );
             }
         }
-
 
         void Initialise()
         {
@@ -436,7 +471,10 @@ namespace PCEFTPOS.EFTClient.IPInterface
                 switch (response)
                 {
                     case null:
-                        Log(LogLevel.Error, tr => tr.Set($"Unable to handle null param {nameof(response)}"));
+                        Log(
+                            LogLevel.Error,
+                            tr => tr.Set($"Unable to handle null param {nameof(response)}")
+                        );
                         break;
 
                     case SetDialogResponse r:
@@ -453,72 +491,140 @@ namespace PCEFTPOS.EFTClient.IPInterface
 
                         if (!r.IsPrePrint)
                         {
-                            FireClientResponseEvent(nameof(OnReceipt), OnReceipt, new EFTEventArgs<EFTReceiptResponse>(r));
+                            FireClientResponseEvent(
+                                nameof(OnReceipt),
+                                OnReceipt,
+                                new EFTEventArgs<EFTReceiptResponse>(r)
+                            );
                         }
                         break;
 
                     case EFTDisplayResponse r:
-                        FireClientResponseEvent(nameof(OnDisplay), OnDisplay, new EFTEventArgs<EFTDisplayResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnDisplay),
+                            OnDisplay,
+                            new EFTEventArgs<EFTDisplayResponse>(r)
+                        );
                         break;
 
                     case EFTLogonResponse r:
-                        FireClientResponseEvent(nameof(OnLogon), OnLogon, new EFTEventArgs<EFTLogonResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnLogon),
+                            OnLogon,
+                            new EFTEventArgs<EFTLogonResponse>(r)
+                        );
                         break;
 
                     case EFTCloudLogonResponse r:
-                        FireClientResponseEvent(nameof(OnCloudLogon), OnCloudLogon, new EFTEventArgs<EFTCloudLogonResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnCloudLogon),
+                            OnCloudLogon,
+                            new EFTEventArgs<EFTCloudLogonResponse>(r)
+                        );
                         break;
 
                     case EFTCloudPairResponse r:
-                        FireClientResponseEvent(nameof(OnCloudPair), OnCloudPair, new EFTEventArgs<EFTCloudPairResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnCloudPair),
+                            OnCloudPair,
+                            new EFTEventArgs<EFTCloudPairResponse>(r)
+                        );
                         break;
 
                     case EFTTransactionResponse r:
-                        FireClientResponseEvent(nameof(OnTransaction), OnTransaction, new EFTEventArgs<EFTTransactionResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnTransaction),
+                            OnTransaction,
+                            new EFTEventArgs<EFTTransactionResponse>(r)
+                        );
                         break;
 
                     case EFTGetLastTransactionResponse r:
-                        FireClientResponseEvent(nameof(OnGetLastTransaction), OnGetLastTransaction, new EFTEventArgs<EFTGetLastTransactionResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnGetLastTransaction),
+                            OnGetLastTransaction,
+                            new EFTEventArgs<EFTGetLastTransactionResponse>(r)
+                        );
                         break;
 
                     case EFTReprintReceiptResponse r:
-                        FireClientResponseEvent(nameof(OnDuplicateReceipt), OnDuplicateReceipt, new EFTEventArgs<EFTReprintReceiptResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnDuplicateReceipt),
+                            OnDuplicateReceipt,
+                            new EFTEventArgs<EFTReprintReceiptResponse>(r)
+                        );
                         break;
 
                     case EFTControlPanelResponse r:
-                        FireClientResponseEvent(nameof(OnDisplayControlPanel), OnDisplayControlPanel, new EFTEventArgs<EFTControlPanelResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnDisplayControlPanel),
+                            OnDisplayControlPanel,
+                            new EFTEventArgs<EFTControlPanelResponse>(r)
+                        );
                         break;
 
                     case EFTSettlementResponse r:
-                        FireClientResponseEvent(nameof(OnSettlement), OnSettlement, new EFTEventArgs<EFTSettlementResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnSettlement),
+                            OnSettlement,
+                            new EFTEventArgs<EFTSettlementResponse>(r)
+                        );
                         break;
 
                     case EFTStatusResponse r:
-                        FireClientResponseEvent(nameof(OnStatus), OnStatus, new EFTEventArgs<EFTStatusResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnStatus),
+                            OnStatus,
+                            new EFTEventArgs<EFTStatusResponse>(r)
+                        );
                         break;
 
                     case EFTQueryCardResponse r:
-                        FireClientResponseEvent(nameof(OnQueryCard), OnQueryCard, new EFTEventArgs<EFTQueryCardResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnQueryCard),
+                            OnQueryCard,
+                            new EFTEventArgs<EFTQueryCardResponse>(r)
+                        );
                         break;
 
                     case EFTChequeAuthResponse r:
-                        FireClientResponseEvent(nameof(OnChequeAuth), OnChequeAuth, new EFTEventArgs<EFTChequeAuthResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnChequeAuth),
+                            OnChequeAuth,
+                            new EFTEventArgs<EFTChequeAuthResponse>(r)
+                        );
                         break;
 
                     case EFTGetPasswordResponse r:
-                        FireClientResponseEvent(nameof(OnGetPassword), OnGetPassword, new EFTEventArgs<EFTGetPasswordResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnGetPassword),
+                            OnGetPassword,
+                            new EFTEventArgs<EFTGetPasswordResponse>(r)
+                        );
                         break;
 
                     case EFTSlaveResponse r:
-                        FireClientResponseEvent(nameof(OnSlave), OnSlave, new EFTEventArgs<EFTSlaveResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnSlave),
+                            OnSlave,
+                            new EFTEventArgs<EFTSlaveResponse>(r)
+                        );
                         break;
 
                     case EFTConfigureMerchantResponse r:
-                        FireClientResponseEvent(nameof(OnConfigMerchant), OnConfigMerchant, new EFTEventArgs<EFTConfigureMerchantResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnConfigMerchant),
+                            OnConfigMerchant,
+                            new EFTEventArgs<EFTConfigureMerchantResponse>(r)
+                        );
                         break;
 
                     case EFTClientListResponse r:
-                        FireClientResponseEvent(nameof(OnClientList), OnClientList, new EFTEventArgs<EFTClientListResponse>(r));
+                        FireClientResponseEvent(
+                            nameof(OnClientList),
+                            OnClientList,
+                            new EFTEventArgs<EFTClientListResponse>(r)
+                        );
                         break;
 
                     default:
@@ -528,7 +634,10 @@ namespace PCEFTPOS.EFTClient.IPInterface
             }
             catch (Exception Ex)
             {
-                Log(LogLevel.Error, tr => tr.Set($"Unhandled error in {nameof(ProcessEFTResponse)}", Ex));
+                Log(
+                    LogLevel.Error,
+                    tr => tr.Set($"Unhandled error in {nameof(ProcessEFTResponse)}", Ex)
+                );
             }
         }
 
@@ -536,8 +645,6 @@ namespace PCEFTPOS.EFTClient.IPInterface
         {
             _socket.Send("#00073 ");
         }
-
-
 
         bool SendIPClientRequest(EFTRequest eftRequest)
         {
@@ -583,7 +690,13 @@ namespace PCEFTPOS.EFTClient.IPInterface
             var tc = System.Environment.TickCount;
             if (tc - recvTickCount > 5000)
             {
-                Log(LogLevel.Debug, tr => tr.Set($"Data is being cleared from the buffer due to a timeout. Content {recvBuf}"));
+                Log(
+                    LogLevel.Debug,
+                    tr =>
+                        tr.Set(
+                            $"Data is being cleared from the buffer due to a timeout. Content {recvBuf}"
+                        )
+                );
                 recvBuf = "";
             }
             recvTickCount = System.Environment.TickCount;
@@ -610,9 +723,12 @@ namespace PCEFTPOS.EFTClient.IPInterface
                         // We have enough bytes to check for length
                         index++;
 
-                        // Try to get the length of the new message. If it's not a valid length 
+                        // Try to get the length of the new message. If it's not a valid length
                         // we might have some corrupt data, keep checking for a valid message
-                        if (!int.TryParse(recvBuf.Substring(index, 4), out int length) || length <= 5)
+                        if (
+                            !int.TryParse(recvBuf.Substring(index, 4), out int length)
+                            || length <= 5
+                        )
                         {
                             continue;
                         }
@@ -620,7 +736,7 @@ namespace PCEFTPOS.EFTClient.IPInterface
                         // We have a valid length
                         index += 4;
 
-                        // If our buffer doesn't contain enough data, wait for more 
+                        // If our buffer doesn't contain enough data, wait for more
                         if (recvBuf.Length < index + length - 5)
                         {
                             recvBuf = recvBuf.Substring(index - 5);
@@ -637,16 +753,21 @@ namespace PCEFTPOS.EFTClient.IPInterface
                         {
                             eftResponse = Parser.StringToEFTResponse(response);
                             ProcessEFTResponse(eftResponse);
-                            if (eftResponse.GetType() == _currentStartTxnRequest?.GetPairedResponseType())
+                            if (
+                                eftResponse.GetType()
+                                == _currentStartTxnRequest?.GetPairedResponseType()
+                            )
                             {
                                 dialogUIHandler?.HandleCloseDisplay();
                             }
                         }
                         catch (ArgumentException argumentException)
                         {
-                            Log(LogLevel.Error, tr => tr.Set("Error parsing response string", argumentException));
+                            Log(
+                                LogLevel.Error,
+                                tr => tr.Set("Error parsing response string", argumentException)
+                            );
                         }
-
 
                         index += length - 5;
                     }
@@ -662,13 +783,15 @@ namespace PCEFTPOS.EFTClient.IPInterface
             {
                 // Fail gracefully.
                 FireOnSocketFailEvent(EFTClientIPErrorType.Client_ParseError, ex.Message);
-                Log(LogLevel.Error, tr => tr.Set($"Exception (ReceiveEFTResponse): {ex.Message}", ex));
+                Log(
+                    LogLevel.Error,
+                    tr => tr.Set($"Exception (ReceiveEFTResponse): {ex.Message}", ex)
+                );
                 return false;
             }
 
             return true;
         }
-
 
         #endregion
 
@@ -697,15 +820,21 @@ namespace PCEFTPOS.EFTClient.IPInterface
 
             FireOnSocketFailEvent(errorType, e.Error);
         }
+
         void TcpSocketOnDataWaiting(object sender, TcpSocketEventArgs e)
         {
-            Log(LogLevel.Debug, tr => tr.Set($"Rx>>{System.Text.ASCIIEncoding.ASCII.GetString(e.Bytes)}<<"));
+            Log(
+                LogLevel.Debug,
+                tr => tr.Set($"Rx>>{System.Text.ASCIIEncoding.ASCII.GetString(e.Bytes)}<<")
+            );
             ReceiveEFTResponse(e.Bytes);
         }
+
         void TcpSocketOnTerminated(object sender, TcpSocketEventArgs e)
         {
             FireOnTerminatedEvent(e.Error);
         }
+
         void TcpSocketOnSend(object sender, TcpSocketEventArgs e)
         {
             FireOnTcpSend(e.Message);
@@ -715,7 +844,12 @@ namespace PCEFTPOS.EFTClient.IPInterface
 
         #region Event Firers
 
-        void FireClientResponseEvent<TEFTResponse>(string name, EventHandler<EFTEventArgs<TEFTResponse>> eventHandler, EFTEventArgs<TEFTResponse> args) where TEFTResponse : EFTResponse
+        void FireClientResponseEvent<TEFTResponse>(
+            string name,
+            EventHandler<EFTEventArgs<TEFTResponse>> eventHandler,
+            EFTEventArgs<TEFTResponse> args
+        )
+            where TEFTResponse : EFTResponse
         {
             Log(LogLevel.Info, tr => tr.Set($"Handle {name}"));
             requestInProgess = false;
@@ -723,7 +857,11 @@ namespace PCEFTPOS.EFTClient.IPInterface
             var tmpEventHandler = eventHandler;
             if (tmpEventHandler != null)
             {
-                if (UseSynchronizationContextForEvents && syncContext != null && syncContext != SynchronizationContext.Current)
+                if (
+                    UseSynchronizationContextForEvents
+                    && syncContext != null
+                    && syncContext != SynchronizationContext.Current
+                )
                 {
                     syncContext.Post(o => tmpEventHandler.Invoke(this, args), null);
                 }
@@ -742,24 +880,41 @@ namespace PCEFTPOS.EFTClient.IPInterface
         {
             OnTcpSend?.Invoke(this, new SocketEventArgs() { TcpMessage = message });
         }
+
         void FireOnTcpReceive(string message)
         {
             OnTcpReceive?.Invoke(this, new SocketEventArgs() { TcpMessage = message });
         }
+
         void FireOnTerminatedEvent(string message)
         {
             Log(LogLevel.Info, tr => tr.Set($"OnTerminated: {message}"));
-            OnTerminated?.Invoke(this, new SocketEventArgs() { ErrorMessage = message, ErrorType = EFTClientIPErrorType.Socket_GeneralError });
+            OnTerminated?.Invoke(
+                this,
+                new SocketEventArgs()
+                {
+                    ErrorMessage = message,
+                    ErrorType = EFTClientIPErrorType.Socket_GeneralError,
+                }
+            );
         }
+
         void FireOnSocketFailEvent(EFTClientIPErrorType errorType, string message)
         {
             Log(LogLevel.Error, tr => tr.Set($"OnSocketFail: {message}"));
-            OnSocketFail?.Invoke(this, new SocketEventArgs() { ErrorMessage = message, ErrorType = EFTClientIPErrorType.Socket_GeneralError });
+            OnSocketFail?.Invoke(
+                this,
+                new SocketEventArgs()
+                {
+                    ErrorMessage = message,
+                    ErrorType = EFTClientIPErrorType.Socket_GeneralError,
+                }
+            );
         }
 
         /// <summary>
-        /// Returns the connected state as of the last read or write operation. This does not necessarily represent 
-        /// the current state of the connection. 
+        /// Returns the connected state as of the last read or write operation. This does not necessarily represent
+        /// the current state of the connection.
         /// To check the current socket state call <see cref="CheckConnectState()"/>
         /// </summary>
         public bool CheckConnectState()
@@ -792,10 +947,16 @@ namespace PCEFTPOS.EFTClient.IPInterface
         public bool UseKeepAlive { get; set; } = false;
 
         /// <summary>Indicates whether there is a request currently in progress.</summary>
-        public bool IsRequestInProgress { get { return requestInProgess; } }
+        public bool IsRequestInProgress
+        {
+            get { return requestInProgess; }
+        }
 
         /// <summary>Indicates whether EFT Client is currently connected.</summary>
-        public bool IsConnected { get { return _socket.IsConnected; } }
+        public bool IsConnected
+        {
+            get { return _socket.IsConnected; }
+        }
 
         /// <summary> When TRUE, the SynchronizationContext will be captured from requests and used to call events</summary>
         public bool UseSynchronizationContextForEvents { get; set; } = true;
@@ -808,10 +969,7 @@ namespace PCEFTPOS.EFTClient.IPInterface
 
         public IDialogUIHandler DialogUIHandler
         {
-            get
-            {
-                return dialogUIHandler;
-            }
+            get { return dialogUIHandler; }
             set
             {
                 dialogUIHandler = value;
@@ -830,47 +988,67 @@ namespace PCEFTPOS.EFTClient.IPInterface
 
         /// <summary>Fired when a client socket is terminated.</summary>
         public event EventHandler<SocketEventArgs> OnTerminated;
+
         /// <summary>Fired when a socket error occurs.</summary>
         public event EventHandler<SocketEventArgs> OnSocketFail;
+
         /// <summary>Fired when a get config merchant result is received.</summary>
         public event EventHandler<SocketEventArgs> OnTcpSend;
+
         /// <summary>Fired when a get config merchant result is received.</summary>
         public event EventHandler<SocketEventArgs> OnTcpReceive;
+
         /// <summary>Fired when a logging event occurs.</summary>
         public event EventHandler<LogEventArgs> OnLog;
 
         /// <summary>Fired when a display is received.</summary>
         public event EventHandler<EFTEventArgs<EFTDisplayResponse>> OnDisplay;
+
         /// <summary>Fired when a receipt is received.</summary>
         public event EventHandler<EFTEventArgs<EFTReceiptResponse>> OnReceipt;
+
         /// <summary>Fired when a logon result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTLogonResponse>> OnLogon;
+
         /// <summary>Fired when a cloud logon result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTCloudLogonResponse>> OnCloudLogon;
+
         /// <summary>Fired when a cloud logon result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTCloudPairResponse>> OnCloudPair;
+
         /// <summary>Fired when a transaction result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTTransactionResponse>> OnTransaction;
+
         /// <summary>Fired when a get last transaction result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTGetLastTransactionResponse>> OnGetLastTransaction;
+
         /// <summary>Fired when a duplicate receipt result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTReprintReceiptResponse>> OnDuplicateReceipt;
+
         /// <summary>Fired when a display control panel result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTControlPanelResponse>> OnDisplayControlPanel;
+
         /// <summary>Fired when a settlement result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTSettlementResponse>> OnSettlement;
+
         /// <summary>Fired when a status result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTStatusResponse>> OnStatus;
+
         /// <summary>Fired when a cheque authorization result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTChequeAuthResponse>> OnChequeAuth;
+
         /// <summary>Fired when a query card result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTQueryCardResponse>> OnQueryCard;
+
         /// <summary>Fired when a get password result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTGetPasswordResponse>> OnGetPassword;
+
         /// <summary>Fired when a get slave result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTSlaveResponse>> OnSlave;
+
         /// <summary>Fired when a get config merchant result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTConfigureMerchantResponse>> OnConfigMerchant;
+
         /// <summary>Fired whan a get client list result is received.</summary>
         public event EventHandler<EFTEventArgs<EFTClientListResponse>> OnClientList;
         #endregion
