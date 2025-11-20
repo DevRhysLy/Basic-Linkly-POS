@@ -24,82 +24,105 @@ namespace POS_GUI_Demo
     {
         TextBox amountTextBox;
         Button submitButton;
-        Button submitButton2;
+        Button settlementButton;
+        Button controlPanelButton;
         ListBox statusList;
         ComboBox txnTypeBox;
 
         public AmountForm()
         {
             this.Text = "perfectPOS";
-            this.Width = 460;
-            this.Height = 420;
+            this.Width = 500;
+            this.Height = 500;
 
+            int leftMargin = 20;
+            int topMargin = 20;
+            int spacing = 10;
+
+            // Amount label and textbox
             Label label = new Label()
             {
                 Text = "Enter Amount:",
-                Top = 20,
-                Left = 20,
-            };
-
-            Label typeLabel = new Label()
-            {
-                Text = "Transaction Type:",
-                Top = 80,
-                Left = 20,
+                Top = topMargin,
+                Left = leftMargin,
+                AutoSize = true,
             };
 
             amountTextBox = new TextBox()
             {
-                Top = 45,
-                Left = 20,
+                Top = label.Bottom + spacing,
+                Left = leftMargin,
                 Width = 200,
             };
 
-            submitButton = new Button()
+            // Transaction type label and combobox
+            Label typeLabel = new Label()
             {
-                Text = "Submit Transaction",
-                Top = 80,
-                Left = 20,
-                Width = 200,
+                Text = "Transaction Type:",
+                Top = amountTextBox.Bottom + spacing * 2,
+                Left = leftMargin,
+                AutoSize = true,
             };
 
             txnTypeBox = new ComboBox()
             {
-                Top = 105,
-                Left = 20,
+                Top = typeLabel.Bottom + spacing,
+                Left = leftMargin,
                 Width = 200,
                 DropDownStyle = ComboBoxStyle.DropDownList,
             };
+            txnTypeBox.Items.Add("Purchase");
+            txnTypeBox.Items.Add("Refund");
+            txnTypeBox.SelectedIndex = 0;
 
-            submitButton2 = new Button()
+            // Buttons row 1
+            submitButton = new Button()
             {
-                Text = "Open Control Panel",
-                Top = 120,
-                Left = 20,
+                Text = "Submit Transaction",
+                Top = txnTypeBox.Bottom + spacing * 2,
+                Left = leftMargin,
                 Width = 200,
             };
 
-            txnTypeBox.Items.Add("Purchase");
-            txnTypeBox.Items.Add("Refund");
-            txnTypeBox.SelectedIndex = 0; // default is purchase
-
-            statusList = new ListBox()
+            // Buttons row 2
+            settlementButton = new Button()
             {
-                Top = 140,
-                Left = 20,
-                Width = 400,
-                Height = 230,
+                Text = "Open Settlement",
+                Top = submitButton.Bottom + spacing,
+                Left = leftMargin,
+                Width = 150,
             };
 
-            submitButton.Click += SubmitButton_Click;
-            submitButton2.Click += SubmitButton2_Click;
-            Controls.Add(submitButton2);
+            controlPanelButton = new Button()
+            {
+                Text = "Open Control Panel",
+                Top = submitButton.Bottom + spacing,
+                Left = settlementButton.Left + settlementButton.Width + spacing,
+                Width = 150,
+            };
 
+            // Status ListBox
+            statusList = new ListBox()
+            {
+                Top = controlPanelButton.Bottom + spacing * 2,
+                Left = leftMargin,
+                Width = this.ClientSize.Width - 40,
+                Height = 200,
+            };
+
+            // Wire up events
+            submitButton.Click += SubmitButton_Click;
+            settlementButton.Click += SettlementButton_Click;
+            controlPanelButton.Click += ControlPanelButton_Click;
+
+            // Add controls
             Controls.Add(label);
             Controls.Add(amountTextBox);
-            Controls.Add(submitButton);
             Controls.Add(typeLabel);
             Controls.Add(txnTypeBox);
+            Controls.Add(submitButton);
+            Controls.Add(settlementButton);
+            Controls.Add(controlPanelButton);
             Controls.Add(statusList);
         }
 
@@ -130,7 +153,7 @@ namespace POS_GUI_Demo
 
                 UpdateStatus("Connected for logon...");
 
-                var req = new EFTLogonRequest();
+                // var req = new EFTLogonRequest();
 
                 if (!eft.DoLogon())
                 {
@@ -148,6 +171,92 @@ namespace POS_GUI_Demo
             }
         }
 
+        private async void ControlPanelButton_Click(object sender, EventArgs e)
+        {
+            statusList.Items.Clear();
+            UpdateStatus("Opening Linkly Control Panel...");
+
+            try
+            {
+                var eft = new EFTClientIP()
+                {
+                    HostName = "127.0.0.1",
+                    HostPort = 2011,
+                    UseSSL = false,
+                };
+                if (!eft.Connect())
+                {
+                    UpdateStatus("Failed to connect to Linkly Client.");
+                    return;
+                }
+
+                UpdateStatus("Connected. Sending Control Panel request...");
+
+                var req = new EFTControlPanelRequest() { ControlPanelType = ControlPanelType.Full };
+
+                if (!eft.DoDisplayControlPanel(req))
+                {
+                    UpdateStatus("Failed to send control panel request.");
+                    return;
+                }
+
+                UpdateStatus("Control panel opened.");
+                await Task.Delay(500);
+
+                eft.Disconnect();
+                eft.Dispose();
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus("Error opening control panel: " + ex.Message);
+            }
+        }
+
+        private async void SettlementButton_Click(object sender, EventArgs e)
+        {
+            statusList.Items.Clear();
+            UpdateStatus("Opening Linkly Settlement Panel...");
+
+            try
+            {
+                var eft = new EFTClientIP()
+                {
+                    HostName = "127.0.0.1",
+                    HostPort = 2011,
+                    UseSSL = false,
+                };
+
+                if (!eft.Connect())
+                {
+                    UpdateStatus("Failed to connect to Linkly Client.");
+                    return;
+                }
+
+                UpdateStatus("Connected. Sending Control Panel request...");
+
+                var req = new EFTControlPanelRequest()
+                {
+                    ControlPanelType = ControlPanelType.Settlement,
+                };
+
+                if (!eft.DoDisplayControlPanel(req))
+                {
+                    UpdateStatus("Failed to send control panel request.");
+                    return;
+                }
+
+                UpdateStatus("Settlement panel opened.");
+                await Task.Delay(500);
+
+                eft.Disconnect();
+                eft.Dispose();
+            }
+            catch (Exception ex)
+            {
+                UpdateStatus("Error opening control panel: " + ex.Message);
+            }
+        }
+
         private void SubmitButton_Click(object sender, EventArgs e)
         {
             if (!decimal.TryParse(amountTextBox.Text, out decimal amount))
@@ -160,64 +269,10 @@ namespace POS_GUI_Demo
             statusList.Items.Clear();
             statusList.Items.Add($"Starting {txnType}...");
 
-            // Create demo object & run in background
             var demo = new EFTClientIPDemo(amount, txnType, UpdateStatus);
             Task.Run(() => demo.Run());
         }
 
-        private void SubmitButton2_Click(object sender, EventArgs e)
-        {
-            statusList.Items.Clear();
-            statusList.Items.Add("Opening EFT Control Panel...");
-
-            Task.Run(() =>
-            {
-                try
-                {
-                    var eft = new EFTClientIP()
-                    {
-                        HostName = "127.0.0.1",
-                        HostPort = 2011,
-                        UseSSL = false,
-                    };
-
-                    eft.OnTerminated += (s, ev) =>
-                    {
-                        UpdateStatus("Connection terminated.");
-                    };
-
-                    if (!eft.Connect())
-                    {
-                        UpdateStatus("Connection failed.");
-                        return;
-                    }
-
-                    // Create Control Panel request
-                    var cpReq = new EFTControlPanelRequest()
-                    {
-                        ControlPanelType = ControlPanelType.Full,
-                    };
-
-                    if (!eft.DoDisplayControlPanel(cpReq))
-                    {
-                        UpdateStatus("Failed to open control panel.");
-                    }
-                    else
-                    {
-                        UpdateStatus("Control panel opened successfully.");
-                    }
-
-                    eft.Disconnect();
-                    eft.Dispose();
-                }
-                catch (Exception ex)
-                {
-                    UpdateStatus("ERROR: " + ex.Message);
-                }
-            });
-        }
-
-        // Thread-safe update from EFTClientIPDemo
         private void UpdateStatus(string msg)
         {
             if (InvokeRequired)
@@ -225,7 +280,6 @@ namespace POS_GUI_Demo
                 Invoke(new Action<string>(UpdateStatus), msg);
                 return;
             }
-
             statusList.Items.Add(msg);
         }
     }
@@ -290,7 +344,6 @@ namespace POS_GUI_Demo
                 }
 
                 _updateUI("Waiting for EFTPOS response...");
-
                 txnFired.WaitOne();
 
                 _updateUI("Disconnecting...");
@@ -307,7 +360,6 @@ namespace POS_GUI_Demo
         {
             var result = e.Response.Success ? "SUCCESS" : "FAILED";
             _updateUI($"Transaction Result: {result}");
-
             txnFired.Set();
         }
 
@@ -325,8 +377,3 @@ namespace POS_GUI_Demo
         }
     }
 }
-
-//var cpReq = new EFTControlPanelRequest()
-// {
-//     ControlPanelType = Full,
-// };
