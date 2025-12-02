@@ -3,15 +3,15 @@ using System;
 namespace PCEFTPOS.EFTClient.IPInterface
 {
     /// <summary>A PC-EFTPOS get last transaction request object.</summary>
-	public class EFTGetLastTransactionRequest : EFTRequest
+    public class EFTGetLastTransactionRequest : EFTRequest
     {
         /// <summary>Constructs a default EFTGetLastTransactionRequest object.</summary>
-        public EFTGetLastTransactionRequest() : base(true, typeof(EFTGetLastTransactionResponse))
-        {
-        }
+        public EFTGetLastTransactionRequest()
+            : base(true, typeof(EFTGetLastTransactionResponse)) { }
 
         /// <summary>Constructs an EFTGetLastTransactionRequest with a TxnRef parameter to look up transaction by.</summary>
-        public EFTGetLastTransactionRequest(string TxnRef) : base(true, typeof(EFTGetLastTransactionResponse))
+        public EFTGetLastTransactionRequest(string TxnRef)
+            : base(true, typeof(EFTGetLastTransactionResponse))
         {
             this.TxnRef = TxnRef ?? "";
         }
@@ -33,8 +33,7 @@ namespace PCEFTPOS.EFTClient.IPInterface
     {
         /// <summary>Constructs a default terminal transaction response object.</summary>
         public EFTGetLastTransactionResponse()
-            : base(typeof(EFTGetLastTransactionRequest))
-        { }
+            : base(typeof(EFTGetLastTransactionRequest)) { }
 
         /// <summary>Two digit merchant code</summary>
         /// <value>Type: <see cref="string"/><para>The default is "00"</para></value>
@@ -47,7 +46,11 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <summary>The type of EFTPOS transaction that was requested.</summary>
         /// <value>Type: <see cref="TransactionType" /><para>Echoed from the request.</para></value>
         [System.Obsolete("Please use TxnType instead of Type")]
-        public TransactionType Type { get { return TxnType; } set { TxnType = value; } }
+        public TransactionType Type
+        {
+            get { return TxnType; }
+            set { TxnType = value; }
+        }
 
         /// <summary>Indicates the card type that was used in the transaction.</summary>
         /// <value>Type: <see cref="System.String" /></value>
@@ -91,7 +94,11 @@ namespace PCEFTPOS.EFTClient.IPInterface
         ///	<item><term>12</term><description>Other</description></item></list>
         ///	</remarks>
         [System.Obsolete("Please use CardName instead of CardBIN")]
-        public int CardBIN { get { return CardName; } set { CardName = value; } }
+        public int CardBIN
+        {
+            get { return CardName; }
+            set { CardName = value; }
+        }
 
         /// <summary>Used to retrieve the transaction from the batch.</summary>
         /// <value>Type: <see cref="System.String" /></value>
@@ -107,7 +114,11 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <value>Type: <see cref="System.DateTime" /><para>Settlement date is returned from the bank.</para></value>
         /// <remarks>Use this property to balance POS EFT totals with settlement EFT totals.</remarks>
         [System.Obsolete("Please use DateSettlement instead of SettlementDate")]
-        public DateTime SettlementDate { get { return DateSettlement; } set { DateSettlement = value; } }
+        public DateTime SettlementDate
+        {
+            get { return DateSettlement; }
+            set { DateSettlement = value; }
+        }
 
         /// <summary>The cash amount for the transaction.</summary>
         /// <value>Type: <see cref="System.Decimal"/><para>The default is 0.</para></value>
@@ -118,7 +129,11 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <value>Type: <see cref="System.Decimal"/><para>The default is 0.</para></value>
         /// <remarks>This property is mandatory for a <see cref="TransactionType.CashOut"></see> transaction type.</remarks>
         [System.Obsolete("Please use AmtCash instead of AmountCash")]
-        public decimal AmountCash { get { return AmtCash; } set { AmtCash = value; } }
+        public decimal AmountCash
+        {
+            get { return AmtCash; }
+            set { AmtCash = value; }
+        }
 
         /// <summary>The purchase amount for the transaction.</summary>
         /// <value>Type: <see cref="System.Decimal"/><para>The default is 0.</para></value>
@@ -129,7 +144,11 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <value>Type: <see cref="System.Decimal"/><para>The default is 0.</para></value>
         /// <remarks>This property is mandatory for all but <see cref="TransactionType.CashOut"></see> transaction types.</remarks>
         [System.Obsolete("Please use AmtPurchase instead of AmountPurchase")]
-        public decimal AmountPurchase { get { return AmtPurchase; } set { AmtPurchase = value; } }
+        public decimal AmountPurchase
+        {
+            get { return AmtPurchase; }
+            set { AmtPurchase = value; }
+        }
 
         /// <summary>The tip amount for the transaction.</summary>
         /// <value>Type: <see cref="System.Decimal" /><para>Echoed from the request.</para></value>
@@ -138,7 +157,11 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <summary>The tip amount for the transaction.</summary>
         /// <value>Type: <see cref="System.Decimal" /><para>Echoed from the request.</para></value>
         [System.Obsolete("Please use AmtTip instead of AmountTip")]
-        public decimal AmountTip { get { return AmtTip; } set { AmtTip = value; } }
+        public decimal AmountTip
+        {
+            get { return AmtTip; }
+            set { AmtTip = value; }
+        }
 
         /// <summary>The authorisation number for the transaction.</summary>
         /// <value>Type: <see cref="System.Int32"/></value>
@@ -149,7 +172,11 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <value>Type: <see cref="System.Int32"/></value>
         /// <remarks>This property is required for a <see cref="TransactionType.Completion"></see> transaction type.</remarks>
         [System.Obsolete("Please use AuthCode instead of AuthNumber")]
-        public int AuthNumber { get { return AuthCode; } set { AuthCode = value; } }
+        public int AuthNumber
+        {
+            get { return AuthCode; }
+            set { AuthCode = value; }
+        }
 
         /// <summary>The reference number to attach to the transaction. This will appear on the receipt.</summary>
         /// <value>Type: <see cref="System.String"/></value>
@@ -160,7 +187,11 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <value>Type: <see cref="System.String"/></value>
         /// <remarks>This property is optional but it usually populated by a unique transaction identifier that can be used for retrieval.</remarks>
         [System.Obsolete("Please use TxnRef instead of ReferenceNumber")]
-        public string ReferenceNumber { get { return TxnRef; } set { TxnRef = value; } }
+        public string ReferenceNumber
+        {
+            get { return TxnRef; }
+            set { TxnRef = value; }
+        }
 
         /// <summary>The card number to use when pan source of POS keyed is used.</summary>
         /// <value>Type: <see cref="System.String"/></value>
@@ -171,7 +202,11 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <value>Type: <see cref="System.String"/></value>
         /// <remarks>Use this property in conjunction with <see cref="PanSource"></see>.</remarks>
         [System.Obsolete("Please use Pan instead of CardPAN")]
-        public string CardPAN { get { return Pan; } set { Pan = value; } }
+        public string CardPAN
+        {
+            get { return Pan; }
+            set { Pan = value; }
+        }
 
         /// <summary>The expiry date of the card when of POS keyed is used.</summary>
         /// <value>Type: <see cref="System.String"/><para>In MMYY format.</para></value>
@@ -182,7 +217,11 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <value>Type: <see cref="System.String"/><para>In MMYY format.</para></value>
         /// <remarks>Use this property in conjunction with <see cref="PanSource"></see> when passing the card expiry date to PC-EFTPOS.</remarks>
         [System.Obsolete("Please use DateExpiry instead of ExpiryDate")]
-        public string ExpiryDate { get { return DateExpiry; } set { DateExpiry = value; } }
+        public string ExpiryDate
+        {
+            get { return DateExpiry; }
+            set { DateExpiry = value; }
+        }
 
         /// <summary>The track 2 data on the magnetic stripe of the card.</summary>
         /// <value>Type: <see cref="System.String" /><para>This property contains the partial track 2 data from the card used in this transaction.</para></value>
@@ -197,7 +236,11 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <value>Type: <see cref="AccountType"/><para>Default is <see cref="AccountType.Default"></see>. Use default to prompt user to enter the account type.</para></value>
         /// <remarks>Use this property in conjunction with <see cref="PanSource"></see> when passing the account type to PC-EFTPOS.</remarks>
         [System.Obsolete("Please use AccountType instead of CardAccountType")]
-        public AccountType CardAccountType { get { return AccountType; } set { AccountType = value; } }
+        public AccountType CardAccountType
+        {
+            get { return AccountType; }
+            set { AccountType = value; }
+        }
 
         /// <summary>Indicates if the last transaction was successful.</summary>
         /// <value>Type: <see cref="System.Boolean" /></value>
@@ -246,7 +289,11 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <summary>Terminal ID configured in the PIN pad.</summary>
         /// <value>Type: <see cref="System.String" /></value>
         [System.Obsolete("Please use Catid instead of TerminalID")]
-        public string TerminalID { get { return Catid; } set { Catid = value; } }
+        public string TerminalID
+        {
+            get { return Catid; }
+            set { Catid = value; }
+        }
 
         /// <summary>Merchant ID configured in the PIN pad.</summary>
         /// <value>Type: <see cref="System.String" /></value>
@@ -255,22 +302,35 @@ namespace PCEFTPOS.EFTClient.IPInterface
         /// <summary>Merchant ID configured in the PIN pad.</summary>
         /// <value>Type: <see cref="System.String" /></value>
         [System.Obsolete("Please use Caid instead of MerchantID")]
-        public string MerchantID { get { return Caid; } set { Caid = value; } }
-
+        public string MerchantID
+        {
+            get { return Caid; }
+            set { Caid = value; }
+        }
 
         /// <summary>System Trace Audit Number</summary>
         /// <value>Type: <see cref="System.Int32"/></value>
         public int Stan { get; set; } = 0;
-        
+
         /// <summary>System Trace Audit Number for VB.Net</summary>
         /// <value>Type: <see cref="System.Int32"/></value>
-        [Description("Stan field to use for VB.Net to resolve ambiguity caused by VB case insensitivity")]
-        public int StanVb { get { return Stan; } set { Stan = value; } }
+        [Description(
+            "Stan field to use for VB.Net to resolve ambiguity caused by VB case insensitivity"
+        )]
+        public int StanVb
+        {
+            get { return Stan; }
+            set { Stan = value; }
+        }
 
         /// <summary>System Trace Audit Number</summary>
         /// <value>Type: <see cref="System.Int32"/></value>
         [System.Obsolete("Please use Stan instead of STAN")]
-        public int STAN { get { return Stan; } set { Stan = value; } }
+        public int STAN
+        {
+            get { return Stan; }
+            set { Stan = value; }
+        }
 
         /// <summary>Additional information sent with the response.</summary>
         /// <value>Type: <see cref="PadField"/></value>
