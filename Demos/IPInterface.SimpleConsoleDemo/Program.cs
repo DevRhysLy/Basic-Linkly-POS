@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Drawing;
 using System.Threading;
 using System.Threading.Tasks;
 using System.Windows.Forms;
@@ -26,6 +27,7 @@ namespace POS_GUI_Demo
         Button submitButton;
         Button settlementButton;
         Button controlPanelButton;
+        Button getLastTransactionButton;
         ListBox statusList;
         ComboBox txnTypeBox;
 
@@ -34,10 +36,15 @@ namespace POS_GUI_Demo
             this.Text = "perfectPOS";
             this.Width = 500;
             this.Height = 500;
+            this.StartPosition = FormStartPosition.CenterScreen;
+            this.Font = new Font("Segoe UI", 10); // modern font
 
             int leftMargin = 20;
             int topMargin = 20;
-            int spacing = 10;
+            int spacingY = 10;
+            int controlWidth = 200;
+            int buttonHeight = 35;
+            Color buttonColor = Color.LightBlue;
 
             // Amount label and textbox
             Label label = new Label()
@@ -50,25 +57,25 @@ namespace POS_GUI_Demo
 
             amountTextBox = new TextBox()
             {
-                Top = label.Bottom + spacing,
+                Top = label.Bottom + spacingY,
                 Left = leftMargin,
-                Width = 200,
+                Width = controlWidth,
             };
 
             // Transaction type label and combobox
             Label typeLabel = new Label()
             {
                 Text = "Transaction Type:",
-                Top = amountTextBox.Bottom + spacing * 2,
+                Top = amountTextBox.Bottom + spacingY * 2,
                 Left = leftMargin,
                 AutoSize = true,
             };
 
             txnTypeBox = new ComboBox()
             {
-                Top = typeLabel.Bottom + spacing,
+                Top = typeLabel.Bottom + spacingY,
                 Left = leftMargin,
-                Width = 200,
+                Width = controlWidth,
                 DropDownStyle = ComboBoxStyle.DropDownList,
             };
             txnTypeBox.Items.Add("Purchase");
@@ -79,43 +86,63 @@ namespace POS_GUI_Demo
             submitButton = new Button()
             {
                 Text = "Submit Transaction",
-                Top = txnTypeBox.Bottom + spacing * 2,
+                Top = txnTypeBox.Bottom + spacingY * 2,
                 Left = leftMargin,
-                Width = 200,
+                Width = controlWidth,
+                Height = buttonHeight,
+                BackColor = buttonColor,
+                FlatStyle = FlatStyle.Flat,
             };
 
             // Buttons row 2
             settlementButton = new Button()
             {
                 Text = "Open Settlement",
-                Top = submitButton.Bottom + spacing,
+                Top = submitButton.Bottom + spacingY,
                 Left = leftMargin,
-                Width = 150,
+                Width = (controlWidth - spacingY) / 2,
+                Height = buttonHeight,
+                BackColor = buttonColor,
+                FlatStyle = FlatStyle.Flat,
             };
 
             controlPanelButton = new Button()
             {
                 Text = "Open Control Panel",
-                Top = submitButton.Bottom + spacing,
-                Left = settlementButton.Left + settlementButton.Width + spacing,
-                Width = 150,
+                Top = submitButton.Bottom + spacingY,
+                Left = settlementButton.Right + spacingY,
+                Width = (controlWidth - spacingY) / 2,
+                Height = buttonHeight,
+                BackColor = buttonColor,
+                FlatStyle = FlatStyle.Flat,
+            };
+
+            // Buttons row 3 - Get Last Transaction
+            getLastTransactionButton = new Button()
+            {
+                Text = "Get Last Transaction",
+                Top = controlPanelButton.Bottom + spacingY,
+                Left = leftMargin,
+                Width = controlWidth,
+                Height = buttonHeight,
+                BackColor = buttonColor,
+                FlatStyle = FlatStyle.Flat,
             };
 
             // Status ListBox
             statusList = new ListBox()
             {
-                Top = controlPanelButton.Bottom + spacing * 2,
+                Top = getLastTransactionButton.Bottom + spacingY * 2,
                 Left = leftMargin,
-                Width = this.ClientSize.Width - 40,
+                Width = this.ClientSize.Width - leftMargin * 2,
                 Height = 200,
             };
 
-            // Wire up events
             submitButton.Click += SubmitButton_Click;
             settlementButton.Click += SettlementButton_Click;
             controlPanelButton.Click += ControlPanelButton_Click;
+            getLastTransactionButton.Click += GetLastTransactionButton_Click;
 
-            // Add controls
             Controls.Add(label);
             Controls.Add(amountTextBox);
             Controls.Add(typeLabel);
@@ -123,6 +150,7 @@ namespace POS_GUI_Demo
             Controls.Add(submitButton);
             Controls.Add(settlementButton);
             Controls.Add(controlPanelButton);
+            Controls.Add(getLastTransactionButton);
             Controls.Add(statusList);
         }
 
@@ -155,11 +183,11 @@ namespace POS_GUI_Demo
 
                 // var req = new EFTLogonRequest();
 
-                if (!eft.DoLogon())
-                {
-                    UpdateStatus("Startup logon failed.");
-                    return;
-                }
+                // if (!eft.DoLogon())
+                // {
+                //     UpdateStatus("Startup logon failed.");
+                //     return;
+                // }
 
                 UpdateStatus("Startup Logon Successful.");
                 eft.Disconnect();
@@ -273,6 +301,57 @@ namespace POS_GUI_Demo
             Task.Run(() => demo.Run());
         }
 
+        private void GetLastTransactionButton_Click(object sender, EventArgs e)
+        {
+            statusList.Items.Clear();
+            UpdateStatus("Retrieving last transaction...");
+
+            Task.Run(() =>
+            {
+                try
+                {
+                    var eft = new EFTClientIP()
+                    {
+                        HostName = "127.0.0.1",
+                        HostPort = 2011,
+                        UseSSL = false,
+                    };
+
+                    if (!eft.Connect())
+                    {
+                        UpdateStatus("Failed to connect to EFT-Client.");
+                        return;
+                    }
+
+                    var req = new EFTGetLastTransactionRequest();
+
+                    eft.OnGetLastTransaction += (s, ea) =>
+                    {
+                        var lastTxn = ea.Response;
+                        UpdateStatus(
+                            $"Last Txn Type: {lastTxn.TxnType}, Amount: {lastTxn.AmtPurchase:C}, "
+                                + $"Success: {lastTxn.LastTransactionSuccess}"
+                        );
+
+                        eft.Disconnect();
+                        eft.Dispose();
+                    };
+
+                    if (!eft.DoRequest(req))
+                    {
+                        UpdateStatus("Failed to send Get Last request.");
+                        eft.Disconnect();
+                        eft.Dispose();
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    UpdateStatus("Error retrieving last transaction: " + ex.Message);
+                }
+            });
+        }
+
         private void UpdateStatus(string msg)
         {
             if (InvokeRequired)
@@ -290,6 +369,7 @@ namespace POS_GUI_Demo
         private readonly Action<string> _updateUI;
         private string _txnType;
         private readonly ManualResetEvent txnFired = new ManualResetEvent(false);
+        private EFTClientIP _eft;
 
         public EFTClientIPDemo(decimal amount, string txnType, Action<string> uiCallback)
         {
@@ -302,20 +382,20 @@ namespace POS_GUI_Demo
         {
             try
             {
-                var eft = new EFTClientIP()
+                _eft = new EFTClientIP()
                 {
                     HostName = "127.0.0.1",
                     HostPort = 2011,
                     UseSSL = false,
                 };
 
-                eft.OnTransaction += Eft_OnTransaction;
-                eft.OnReceipt += Eft_OnReceipt;
-                eft.OnTerminated += Eft_OnTerminated;
+                _eft.OnTransaction += Eft_OnTransaction;
+                _eft.OnReceipt += Eft_OnReceipt;
+                _eft.OnTerminated += Eft_OnTerminated;
 
                 _updateUI("Connecting to EFT-Client...");
 
-                if (!eft.Connect())
+                if (!_eft.Connect())
                 {
                     _updateUI("Connection failed.");
                     return;
@@ -325,6 +405,7 @@ namespace POS_GUI_Demo
 
                 TransactionType type =
                     _txnType == "Refund" ? TransactionType.Refund : TransactionType.PurchaseCash;
+
                 _updateUI($"Sending {_txnType} for: {_amount:C}");
 
                 var req = new EFTTransactionRequest()
@@ -337,18 +418,39 @@ namespace POS_GUI_Demo
                     Application = TerminalApplication.EFTPOS,
                 };
 
-                if (!eft.DoTransaction(req))
+                if (!_eft.DoTransaction(req))
                 {
                     _updateUI("Failed to send transaction.");
                     return;
                 }
 
-                _updateUI("Waiting for EFTPOS response...");
-                txnFired.WaitOne();
+                _updateUI("Waiting for EFTPOS response (30s timeout)...");
+
+                bool fired = txnFired.WaitOne(TimeSpan.FromSeconds(30));
+
+                if (!fired)
+                {
+                    _updateUI("Timeout reached! Sending CANCEL to terminal...");
+
+                    try
+                    {
+                        _eft.DoSendKey(EFTPOSKey.OkCancel);
+                        _updateUI("Cancel sent. Waiting for cancel response (10s)...");
+                        bool cancelFired = txnFired.WaitOne(TimeSpan.FromSeconds(10));
+                        if (!cancelFired)
+                        {
+                            _updateUI("Cancel failed or no response from terminal.");
+                        }
+                    }
+                    catch (Exception ce)
+                    {
+                        _updateUI("Cancel ERROR: " + ce.Message);
+                    }
+                }
 
                 _updateUI("Disconnecting...");
-                eft.Disconnect();
-                eft.Dispose();
+                _eft.Disconnect();
+                _eft.Dispose();
             }
             catch (Exception ex)
             {
